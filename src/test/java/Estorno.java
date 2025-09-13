@@ -1,6 +1,5 @@
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.stream.Stream;
@@ -24,17 +23,35 @@ class Estorno {
         );
     }
 
-    
+    @ParameterizedTest
+    @MethodSource("valoresEstorno")
     void refundComCarteiraValida(double inicial, double valor, double saldoEsperado) {
-        
+        DigitalWallet digitalWallet = new DigitalWallet("Deivyson", inicial);
+        digitalWallet.unlock();
+        digitalWallet.verify();
+        assumeTrue(digitalWallet.isLocked() == false & digitalWallet.isVerified() == true);
+        digitalWallet.refund(valor);
+        assertEquals(saldoEsperado, digitalWallet.getBalance());
     }
-
     
+    @ParameterizedTest
+    @ValueSource(doubles = {-10,0,-0.1})
     void deveLancarExcecaoParaRefundInvalido(double valor) {
-        
+        DigitalWallet digitalWallet = new DigitalWallet("Deivyson", 100);
+        digitalWallet.verify();
+        digitalWallet.unlock();
+        assumeTrue(digitalWallet.isLocked() == false & digitalWallet.isVerified() == true);
+        assertThrows(IllegalArgumentException.class, ()->{
+            digitalWallet.refund(valor);
+        });
     }
 
+    @Test
     void deveLancarSeNaoVerificadaOuBloqueada() {
-        
+        DigitalWallet digitalWallet = new DigitalWallet("Deivyson", 100);
+
+        assertThrows(IllegalStateException.class, ()->{
+            digitalWallet.refund(10);
+        });
     }
 }
